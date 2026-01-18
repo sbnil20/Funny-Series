@@ -7,14 +7,11 @@
     <style>
         body { background: #000; color: #0f0; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; text-transform: uppercase; user-select: none; }
         
-        /* Fake Screenshot Blocker */
-        #anti-ss { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: none; align-items: center; justify-content: center; color: white; font-weight: bold; text-align: center; }
-
-        /* Invisible Trigger Layer for Sound/Vibrate Start */
-        #start-trigger { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: transparent; }
+        #anti-ss { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: none; align-items: center; justify-content: center; color: white; font-weight: bold; text-align: center; border: 20px solid red; box-sizing: border-box; }
 
         canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.8; }
-        #hud { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; text-align: center; pointer-events: none; }
+        
+        #hud { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; text-align: center; pointer-events: none; }
         .circle-scan { width: 140px; height: 140px; border: 4px solid #0f0; border-radius: 50%; margin: 0 auto; border-top-color: transparent; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         
@@ -26,22 +23,20 @@
         .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(200,0,0,0.2); border: 2px solid red; padding: 10px 20px; pointer-events: none; z-index: 9999; font-size: 18px; box-shadow: 0 0 20px red; text-shadow: 0 0 5px black; }
 
         #success-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 11000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        #success-text { font-size: 60px; font-weight: bold; margin: 0; animation: flash-text 0.2s infinite; }
-        @keyframes flash-text { 0% { color: #0f0; text-shadow: 0 0 20px #0f0; } 50% { color: #f00; text-shadow: 0 0 20px #f00; } 100% { color: #0f0; text-shadow: 0 0 20px #0f0; } }
+        #success-text { font-size: 65px; font-weight: bold; margin: 0; animation: flash-text 0.15s infinite; }
+        @keyframes flash-text { 0% { color: #0f0; text-shadow: 0 0 30px #0f0; } 50% { color: #f00; text-shadow: 0 0 30px #f00; } 100% { color: #0f0; text-shadow: 0 0 30px #0f0; } }
 
         #scare { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000 url('https://p7.itc.cn/images01/20210323/c3157e93c66041ec9990864f1d411470.jpeg') center/cover; display: none; z-index: 12000; animation: shake 0.05s infinite; }
         @keyframes shake { 0% { transform: translate(3px,3px); } 100% { transform: translate(-3px,-3px); } }
 
-        #final-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 13000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        #typewriter { font-size: 22px; color: #ffffff; font-weight: bold; text-transform: none; max-width: 85%; }
-        .cursor { display: inline-block; width: 10px; height: 22px; background: #ffffff; margin-left: 5px; animation: blink 0.7s infinite; vertical-align: middle; }
+        #final-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 13000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+        #typewriter { font-size: 22px; color: #ffffff; font-weight: bold; text-transform: none; line-height: 1.4; max-width: 80%; }
+        .cursor { display: inline-block; width: 12px; height: 24px; background: #fff; margin-left: 5px; animation: blink 0.7s infinite; vertical-align: middle; }
     </style>
 </head>
-<body onmousedown="handleTouch(event)" ontouchstart="handleTouch(event)">
+<body onload="startHacking()" onmousedown="handleTouch(event)" ontouchstart="handleTouch(event)">
 
-    <div id="anti-ss"><div>SECURITY POLICY:<br>SCREENSHOTS DISABLED</div></div>
-
-    <div id="start-trigger" onclick="startHacking()"></div>
+    <div id="anti-ss"><div><h2 style="color: red;">CRITICAL ERROR</h2><p>SCREENSHOTS DISABLED</p></div></div>
 
     <canvas id="matrix"></canvas>
 
@@ -53,13 +48,12 @@
                 <div id="bar-fill"></div>
                 <div id="pct-text">0%</div>
             </div>
-            <div style="font-size: 10px; margin-top: 5px;">PROCESSOR_ID: <span id="pid">0x882A...</span></div>
         </div>
     </div>
 
     <div id="success-screen">
         <h1 id="success-text">SUCCESS</h1>
-        <p style="color: white; font-size: 18px; margin-top: 15px;">ALL SYSTEM DATA UPLOADED</p>
+        <p style="color: white; font-size: 18px; margin-top: 15px;">DATA UPLOAD 100% COMPLETE</p>
     </div>
 
     <div id="scare"></div>
@@ -70,10 +64,11 @@
 
     <script>
         const canvas = document.getElementById('matrix'), ctx = canvas.getContext('2d');
-        let isStarted = false, isScared = false;
+        let isStarted = false, isScared = false, audioEnabled = false;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(freq, type, vol, duration) {
+            if (!audioEnabled) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
             osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
@@ -83,31 +78,32 @@
         }
 
         function handleTouch(e) {
-            if (!isStarted || isScared) return;
+            if (!audioEnabled) { audioEnabled = true; audioCtx.resume(); }
+            if (isScared) return;
             if (navigator.vibrate) navigator.vibrate(100);
-            playBeep(100, 'sawtooth', 0.2, 0.1);
-
+            playBeep(150, 'sawtooth', 0.4, 0.1);
+            
             const msg = document.createElement('div');
             msg.className = 'touch-msg';
             const errorTexts = ["ACCESS DENIED", "SYSTEM LOCKED", "STOP ATTEMPT", "ENCRYPTION ACTIVE", "CRITICAL ERROR"];
             msg.innerText = errorTexts[Math.floor(Math.random() * errorTexts.length)];
-            const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
-            const y = e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight / 2);
+            
+            const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             msg.style.left = (x - 80) + 'px'; msg.style.top = (y - 20) + 'px';
             document.body.appendChild(msg);
             setTimeout(() => msg.remove(), 600);
         }
 
         canvas.height = window.innerHeight; canvas.width = window.innerWidth;
-        const charList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&*";
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&*";
         const drops = Array(Math.floor(canvas.width / 20)).fill(1);
-        
+
         function drawMatrix() {
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0f0"; ctx.font = "15px Courier New";
             drops.forEach((y, i) => {
-                const char = charList[Math.floor(Math.random() * charList.length)];
-                ctx.fillText(char, i * 20, y * 20);
+                ctx.fillText(letters[Math.floor(Math.random() * letters.length)], i * 20, y * 20);
                 if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
             });
@@ -116,28 +112,21 @@
         async function startHacking() {
             if (isStarted) return;
             isStarted = true;
-            document.getElementById('start-trigger').style.display = 'none';
-            document.getElementById('hud').style.display = 'block';
+            setInterval(() => { if(!isScared) playBeep(250, 'square', 0.05, 0.08); }, 500);
             setInterval(drawMatrix, 50);
-            setInterval(() => { if(!isScared) playBeep(200, 'square', 0.02, 0.05); }, 500);
 
-            const tasks = [
-                { name: "PHASE 1: FIREWALL BYPASS", color: "#0f0", speed: 0.8 },
-                { name: "PHASE 2: EXTRACTING DATA", color: "#00fbff", speed: 0.5 },
-                { name: "PHASE 3: DISABLING HARDWARE", color: "#f00", speed: 0.15, last: true }
-            ];
-
-            for (let task of tasks) await runTask(task);
+            const tasks = [{ name: "BYPASSING FIREWALL", speed: 0.8 }, { name: "EXTRACTING DATA", speed: 0.5 }, { name: "ENCRYPTING FILES", speed: 0.2 }];
+            for (let t of tasks) await runTask(t);
             showFinal();
         }
 
-        function runTask(task) {
+        function runTask(t) {
             return new Promise(resolve => {
                 let p = 0;
-                const bar = document.getElementById('bar-fill'), pct = document.getElementById('pct-text'), name = document.getElementById('task-name');
-                name.innerText = task.name; name.style.color = task.color; bar.style.backgroundColor = task.color;
+                const bar = document.getElementById('bar-fill'), name = document.getElementById('task-name'), pct = document.getElementById('pct-text');
+                name.innerText = t.name;
                 const interval = setInterval(() => {
-                    p += (Math.random() * task.speed) + 0.1;
+                    p += (Math.random() * t.speed) + 0.1;
                     if (p >= 100) { p = 100; clearInterval(interval); setTimeout(resolve, 800); }
                     bar.style.width = p + "%"; pct.innerText = Math.floor(p) + "%";
                 }, 100);
@@ -147,7 +136,7 @@
         function showFinal() {
             document.getElementById('hud').style.display = 'none';
             document.getElementById('success-screen').style.display = 'flex';
-            playBeep(1000, 'square', 0.2, 0.5);
+            playBeep(900, 'square', 0.5, 0.8);
             setTimeout(triggerScare, 4000);
         }
 
@@ -155,24 +144,24 @@
             isScared = true;
             document.getElementById('success-screen').style.display = 'none';
             document.getElementById('scare').style.display = 'block';
-            playBeep(100, 'square', 0.5, 2);
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 1000]);
+            playBeep(80, 'sawtooth', 1.0, 2.5);
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+            
             setTimeout(() => {
                 document.getElementById('scare').style.display = 'none';
                 document.getElementById('final-screen').style.display = 'flex';
-                setTimeout(revealFinalText, 300000); 
-            }, 2000);
+                setTimeout(revealJoke, 300000); // 5 Minute Wait
+            }, 2500);
         }
 
-        function revealFinalText() {
+        function revealJoke() {
             document.getElementById('cursor-el').style.display = 'inline-block';
             const text = "This is make for funny do not serious 😊";
             const target = document.getElementById('typewriter');
             let i = 0;
             function type() {
                 if (i < text.length) {
-                    target.innerHTML += text.charAt(i);
-                    i++;
+                    target.innerHTML += text.charAt(i); i++;
                     playBeep(600, 'sine', 0.05, 0.02);
                     setTimeout(type, 100);
                 }

